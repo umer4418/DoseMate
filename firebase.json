@@ -1,0 +1,32 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "dosemate-65db9",
+          "appId": "1:240566440039:android:cdb5784717d0059709c4c2",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "dosemate-65db9",
+          "configurations": {
+            "android": "1:240566440039:android:cdb5784717d0059709c4c2",
+            "ios": "1:240566440039:ios:4ce13b55ae5f220709c4c2",
+            "macos": "1:240566440039:ios:4ce13b55ae5f220709c4c2",
+            "web": "1:240566440039:web:a5099a4bbe9856b909c4c2",
+            "windows": "1:240566440039:web:db1b08308c875de409c4c2"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}
