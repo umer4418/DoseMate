@@ -79,10 +79,6 @@ class DoctorShellView extends GetView<DoctorHomeController> {
   }
 }
 
-// ============================================================================
-// DOCTOR HOME
-// ============================================================================
-
 class DoctorHomeTab extends GetView<DoctorHomeController> {
   const DoctorHomeTab({super.key});
 
@@ -99,10 +95,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
         children: [
-          // ------------------------------------------------------------------
-          // HEADER
-          // ------------------------------------------------------------------
-
           Obx(
                 () {
               final user = auth.currentUser.value;
@@ -192,11 +184,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
           ),
 
           const SizedBox(height: 24),
-
-          // ------------------------------------------------------------------
-          // AVAILABILITY HERO
-          // ------------------------------------------------------------------
-
           Obx(
                 () {
               final user = auth.currentUser.value;
@@ -305,11 +292,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
           ),
 
           const SizedBox(height: 20),
-
-          // ------------------------------------------------------------------
-          // DECORATIVE DOCTOR IMAGE
-          // ------------------------------------------------------------------
-
           Container(
             padding: const EdgeInsets.fromLTRB(
               18,
@@ -376,10 +358,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
           ),
 
           const SizedBox(height: 26),
-
-          // ------------------------------------------------------------------
-          // OVERVIEW
-          // ------------------------------------------------------------------
 
           Text(
             'Overview',
@@ -457,11 +435,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
           ),
 
           const SizedBox(height: 28),
-
-          // ------------------------------------------------------------------
-          // UPCOMING REQUESTS
-          // ------------------------------------------------------------------
-
           Row(
             children: [
               Expanded(
@@ -547,10 +520,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
     return 'Good evening';
   }
 }
-
-// ============================================================================
-// BOOKINGS
-// ============================================================================
 
 class DoctorBookingsView
     extends GetView<AppointmentController> {
@@ -652,10 +621,6 @@ class DoctorBookingsView
   }
 }
 
-// ============================================================================
-// AVAILABILITY
-// ============================================================================
-
 class AvailabilityView
     extends GetView<AvailabilityController> {
   const AvailabilityView({super.key});
@@ -686,10 +651,6 @@ class AvailabilityView
           30,
         ),
         children: [
-          // ----------------------------------------------------------------
-          // HEADER
-          // ----------------------------------------------------------------
-
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -755,11 +716,6 @@ class AvailabilityView
           ),
 
           const SizedBox(height: 22),
-
-          // ----------------------------------------------------------------
-          // ACCEPT BOOKINGS
-          // ----------------------------------------------------------------
-
           _AvailabilitySectionCard(
             child: Obx(
                   () => SwitchListTile.adaptive(
@@ -803,11 +759,6 @@ class AvailabilityView
           ),
 
           const SizedBox(height: 18),
-
-          // ----------------------------------------------------------------
-          // WORKING DAYS
-          // ----------------------------------------------------------------
-
           _AvailabilitySectionCard(
             child: Column(
               crossAxisAlignment:
@@ -1024,10 +975,6 @@ class AvailabilityView
   }
 }
 
-// ============================================================================
-// STAT CARD
-// ============================================================================
-
 class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.icon,
@@ -1107,10 +1054,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// UPCOMING BOOKING
-// ============================================================================
-
 class _UpcomingBookingCard
     extends StatelessWidget {
   const _UpcomingBookingCard({
@@ -1146,7 +1089,6 @@ class _UpcomingBookingCard
       ),
       child: Row(
         children: [
-          // Decorative image, NOT doctor profile
           Container(
             height: 50,
             width: 50,
@@ -1250,10 +1192,6 @@ class _UpcomingBookingCard
     );
   }
 }
-
-// ============================================================================
-// APPOINTMENT CARD
-// ============================================================================
 
 class _AppointmentCard
     extends StatelessWidget {
@@ -1531,11 +1469,6 @@ class _AppointmentCard
     );
   }
 }
-
-// ============================================================================
-// APPOINTMENT INFO
-// ============================================================================
-
 class _AppointmentInfo
     extends StatelessWidget {
   const _AppointmentInfo({
@@ -1584,10 +1517,6 @@ class _AppointmentInfo
   }
 }
 
-// ============================================================================
-// AVAILABILITY SECTION
-// ============================================================================
-
 class _AvailabilitySectionCard
     extends StatelessWidget {
   const _AvailabilitySectionCard({
@@ -1617,10 +1546,6 @@ class _AvailabilitySectionCard
     );
   }
 }
-
-// ============================================================================
-// TIME CARD
-// ============================================================================
 
 class _TimeCard
     extends StatelessWidget {
@@ -1713,10 +1638,6 @@ class _TimeCard
     );
   }
 }
-
-// ============================================================================
-// EMPTY STATE
-// ============================================================================
 
 class _ModernEmptyState
     extends StatelessWidget {

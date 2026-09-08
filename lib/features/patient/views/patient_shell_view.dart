@@ -67,10 +67,6 @@ class PatientShellView extends GetView<PatientHomeController> {
   }
 }
 
-// ============================================================================
-// CUSTOM BOTTOM APP BAR
-// ============================================================================
-
 class _PatientBottomBar extends StatelessWidget {
   const _PatientBottomBar({
     required this.selectedIndex,
@@ -201,10 +197,6 @@ class _BottomBarItem extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// PATIENT HOME
-// ============================================================================
-
 class PatientHomeTab extends GetView<PatientHomeController> {
   const PatientHomeTab({super.key});
 
@@ -217,10 +209,6 @@ class PatientHomeTab extends GetView<PatientHomeController> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 120),
         children: [
-          // ==================================================================
-          // HEADER
-          // ==================================================================
-
           Obx(() {
             final user = auth.currentUser.value;
 
@@ -293,26 +281,10 @@ class PatientHomeTab extends GetView<PatientHomeController> {
           }),
 
           const SizedBox(height: 24),
-
-          // ==================================================================
-          // HEALTH SUMMARY
-          // ==================================================================
-
           _MedicineSummaryCard(),
-
           const SizedBox(height: 20),
-
-          // ==================================================================
-          // HEALTH PROMO CARD / IMAGE
-          // ==================================================================
-
           _HealthBanner(),
-
           const SizedBox(height: 26),
-
-          // ==================================================================
-          // QUICK ACTIONS
-          // ==================================================================
 
           const _SectionHeader(
             title: 'Quick actions',
@@ -369,11 +341,6 @@ class PatientHomeTab extends GetView<PatientHomeController> {
           ),
 
           const SizedBox(height: 26),
-
-          // ==================================================================
-          // DOCTORS BANNER
-          // ==================================================================
-
           _DoctorsBanner(
             onTap: () {
               controller.tabIndex.value = 2;
@@ -381,10 +348,6 @@ class PatientHomeTab extends GetView<PatientHomeController> {
           ),
 
           const SizedBox(height: 28),
-
-          // ==================================================================
-          // UPCOMING DOSES HEADER
-          // ==================================================================
 
           Row(
             children: [
@@ -427,11 +390,6 @@ class PatientHomeTab extends GetView<PatientHomeController> {
           ),
 
           const SizedBox(height: 12),
-
-          // ==================================================================
-          // UPCOMING DOSES
-          // ==================================================================
-
           Obx(() {
             final items = controller.todaysReminders;
 
@@ -467,11 +425,6 @@ class PatientHomeTab extends GetView<PatientHomeController> {
     );
   }
 }
-
-// ============================================================================
-// MEDICINE SUMMARY CARD
-// ============================================================================
-
 class _MedicineSummaryCard extends GetView<PatientHomeController> {
   const _MedicineSummaryCard();
 
@@ -639,10 +592,6 @@ class _MedicineSummaryCard extends GetView<PatientHomeController> {
   }
 }
 
-// ============================================================================
-// HEALTH BANNER
-// ============================================================================
-
 class _HealthBanner extends StatelessWidget {
   const _HealthBanner();
 
@@ -703,10 +652,6 @@ class _HealthBanner extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// DOCTOR BANNER
-// ============================================================================
 
 class _DoctorsBanner extends StatelessWidget {
   const _DoctorsBanner({
@@ -831,10 +776,6 @@ class _DoctorsBanner extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// SECTION TITLE
-// ============================================================================
-
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
     required this.title,
@@ -870,9 +811,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// QUICK ACTION CARD
-// ============================================================================
 
 class _ActionCard extends StatelessWidget {
   const _ActionCard({
@@ -957,10 +895,6 @@ class _ActionCard extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// DOSE CARD
-// ============================================================================
 
 class _DoseCard extends StatelessWidget {
   const _DoseCard({

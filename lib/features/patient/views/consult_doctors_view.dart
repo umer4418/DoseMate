@@ -18,10 +18,6 @@ class ConsultDoctorsView extends GetView<AppointmentController> {
       body: SafeArea(
         child: Column(
           children: [
-            // ============================================================
-            // HEADER
-            // ============================================================
-
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
@@ -70,10 +66,6 @@ class ConsultDoctorsView extends GetView<AppointmentController> {
                 ],
               ),
             ),
-
-            // ============================================================
-            // DOCTORS
-            // ============================================================
             Expanded(
               child: Obx(() {
                 final doctors = controller.doctors;
@@ -100,10 +92,6 @@ class ConsultDoctorsView extends GetView<AppointmentController> {
     );
   }
 }
-
-// ============================================================================
-// DOCTOR CARD
-// ============================================================================
 
 class _DoctorCard extends StatelessWidget {
   const _DoctorCard({required this.doctor});
@@ -139,10 +127,6 @@ class _DoctorCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ============================================================
-            // DOCTOR HEADER
-            // ============================================================
-
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -260,10 +244,6 @@ class _DoctorCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 16),
-
-            // ============================================================
-            // INFORMATION SECTION
-            // ============================================================
             Container(
               padding: const EdgeInsets.all(13),
               decoration: BoxDecoration(
@@ -311,10 +291,6 @@ class _DoctorCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 15),
-
-            // ============================================================
-            // ACTION BUTTONS
-            // ============================================================
             Row(
               children: [
                 Expanded(
@@ -374,10 +350,6 @@ class _DoctorCard extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// INFO ITEM
-// ============================================================================
-
 class _InfoItem extends StatelessWidget {
   const _InfoItem({
     required this.icon,
@@ -426,10 +398,6 @@ class _InfoItem extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// EMPTY STATE
-// ============================================================================
 
 class _EmptyDoctorsState extends StatelessWidget {
   const _EmptyDoctorsState();

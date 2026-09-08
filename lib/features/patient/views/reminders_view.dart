@@ -120,10 +120,6 @@ class RemindersView extends GetView<ReminderController> {
   }
 }
 
-// ============================================================================
-// REMINDER CARD
-// ============================================================================
-
 class _ReminderCard extends StatelessWidget {
   const _ReminderCard({
     required this.medicineName,
@@ -337,10 +333,6 @@ class _ReminderCard extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// EMPTY STATE
-// ============================================================================
-
 class _EmptyReminderState extends StatelessWidget {
   const _EmptyReminderState({required this.onAdd});
 
@@ -411,10 +403,6 @@ class _EmptyReminderState extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// ADD REMINDER VIEW
-// ============================================================================
 
 class AddReminderView extends StatefulWidget {
   const AddReminderView({super.key});
@@ -491,10 +479,6 @@ class _AddReminderViewState extends State<AddReminderView> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
         children: [
-          // ================================================================
-          // TOP INFO CARD
-          // ================================================================
-
           Container(
             padding: const EdgeInsets.all(17),
             decoration: BoxDecoration(
@@ -562,10 +546,6 @@ class _AddReminderViewState extends State<AddReminderView> {
           ),
 
           const SizedBox(height: 28),
-
-          // ================================================================
-          // DAYS
-          // ================================================================
           const _FormSectionTitle(
             title: 'Repeat days',
             subtitle: 'Choose the days you take this medicine',
@@ -611,10 +591,6 @@ class _AddReminderViewState extends State<AddReminderView> {
           ),
 
           const SizedBox(height: 30),
-
-          // ================================================================
-          // TIMES
-          // ================================================================
           Row(
             children: [
               const Expanded(
@@ -746,10 +722,6 @@ class _AddReminderViewState extends State<AddReminderView> {
     );
   }
 }
-
-// ============================================================================
-// FORM SECTION TITLE
-// ============================================================================
 
 class _FormSectionTitle extends StatelessWidget {
   const _FormSectionTitle({required this.title, required this.subtitle});

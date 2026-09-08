@@ -95,17 +95,8 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
         children: [
-          // ============================================================
-          // TOP BANNER
-          // ============================================================
-
           _AppointmentBanner(),
-
           const SizedBox(height: 26),
-
-          // ============================================================
-          // SELECT DOCTOR
-          // ============================================================
           const _SectionTitle(
             title: 'Choose your doctor',
             subtitle: 'Select a healthcare professional for your appointment',
@@ -173,17 +164,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           }),
 
           const SizedBox(height: 16),
-
-          // ============================================================
-          // DOCTOR INFORMATION CARD
-          // ============================================================
           if (doctor != null) _DoctorInfoCard(doctor: doctor!),
-
           if (doctor != null) const SizedBox(height: 26),
 
-          // ============================================================
-          // DATE
-          // ============================================================
           const _SectionTitle(
             title: 'Choose a date',
             subtitle: 'Select an available working day',
@@ -272,9 +255,6 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
 
           const SizedBox(height: 26),
 
-          // ============================================================
-          // AVAILABLE TIME SLOTS
-          // ============================================================
           const _SectionTitle(
             title: 'Available time slots',
             subtitle: 'Choose a convenient time for your appointment',
@@ -369,9 +349,6 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
 
           const SizedBox(height: 28),
 
-          // ============================================================
-          // NOTES
-          // ============================================================
           const _SectionTitle(
             title: 'Appointment notes',
             subtitle: 'Tell the doctor about your reason for visiting',
@@ -392,9 +369,6 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   }
 }
 
-// ============================================================================
-// APPOINTMENT BANNER
-// ============================================================================
 
 class _AppointmentBanner extends StatelessWidget {
   const _AppointmentBanner();
@@ -501,10 +475,6 @@ class _AppointmentBanner extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// DOCTOR INFORMATION CARD
-// ============================================================================
 
 class _DoctorInfoCard extends StatelessWidget {
   const _DoctorInfoCard({required this.doctor});
@@ -664,10 +634,6 @@ class _DoctorInfoCard extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// INFORMATION BOX
-// ============================================================================
-
 class _InfoBox extends StatelessWidget {
   const _InfoBox({
     required this.icon,
@@ -733,10 +699,6 @@ class _InfoBox extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// SECTION TITLE
-// ============================================================================
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.title, required this.subtitle});
