@@ -726,10 +726,6 @@ class BookAppointmentView extends GetView<AppointmentController> {
   }
 }
 
-// ============================================================
-// BOOKING OPTION
-// ============================================================
-
 class _BookingOption extends StatelessWidget {
   const _BookingOption({
     required this.icon,
