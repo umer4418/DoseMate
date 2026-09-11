@@ -24,18 +24,15 @@ class TimeUtils {
   }
 
   static int toMinutes(TimeOfDay time) => time.hour * 60 + time.minute;
-
   static String weekdayName(DateTime date) => DateFormat('EEEE').format(date);
-
   static String prettyDate(DateTime date) => DateFormat('EEE, d MMM yyyy').format(date);
-
   static String dateKey(DateTime date) => DateFormat('yyyy-MM-dd').format(date);
-
   static List<String> generateSlots({
     required String startTime,
     required String endTime,
     int intervalMinutes = 30,
-  }) {
+  })
+  {
     final start = parseTime(startTime);
     final end = parseTime(endTime);
     if (start == null || end == null) return [];

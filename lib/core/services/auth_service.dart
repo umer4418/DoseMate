@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../models/user_model.dart';
@@ -18,9 +17,6 @@ class AuthService {
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance;
 
-  final FirebaseStorage _storage =
-      FirebaseStorage.instance;
-
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [
       'email',
@@ -28,56 +24,25 @@ class AuthService {
     ],
   );
 
-  // ============================================================
-  // CURRENT USER
-  // ============================================================
-
   User? get currentUser => _auth.currentUser;
-
   Stream<User?> get authState => _auth.authStateChanges();
 
-  // ============================================================
-  // UPLOAD PROFILE PICTURE
-  // ============================================================
-
-  Future<String?> uploadProfilePicture(
-      File image,
-      String uid,
-      ) async {
+  Future<Blob?> prepareProfilePicture(File image) async {
     try {
-      final ref = _storage
-          .ref()
-          .child('profile_pictures')
-          .child('$uid.jpg');
+      final bytes = await image.readAsBytes();
+      if (bytes.length > 700 * 1024) {
+        throw Exception(
+          'Profile image is too large. '
+              'Please select a smaller image.',
+        );
+      }
 
-      await ref.putFile(image).timeout(
-        const Duration(seconds: 30),
-      );
-
-      final downloadUrl = await ref.getDownloadURL().timeout(
-        const Duration(seconds: 15),
-      );
-
-      return downloadUrl;
-    } on FirebaseException catch (e) {
-      print(
-        'Firebase Storage Error: '
-            '${e.code} - ${e.message}',
-      );
-
-      return null;
-    } on TimeoutException {
-      print('Profile image upload timed out.');
-      return null;
+      return Blob(bytes);
     } catch (e) {
-      print('Profile image upload error: $e');
+      print('Profile image error: $e');
       return null;
     }
   }
-
-  // ============================================================
-  // FETCH USER
-  // ============================================================
 
   Future<AppUser?> fetchUser(
       String uid,
@@ -111,10 +76,6 @@ class AuthService {
     }
   }
 
-  // ============================================================
-  // LOGIN
-  // ============================================================
-
   Future<UserCredential> login({
     required String email,
     required String password,
@@ -129,10 +90,6 @@ class AuthService {
     );
   }
 
-  // ============================================================
-  // PASSWORD RESET
-  // ============================================================
-
   Future<void> sendPasswordReset(
       String email,
       ) {
@@ -145,10 +102,6 @@ class AuthService {
     );
   }
 
-  // ============================================================
-  // REGISTER PATIENT
-  // ============================================================
-
   Future<UserCredential> registerPatient({
     required String name,
     required String email,
@@ -158,9 +111,6 @@ class AuthService {
     required String gender,
     File? profileImage,
   }) async {
-    // ----------------------------------------------------------
-    // CREATE FIREBASE AUTH ACCOUNT
-    // ----------------------------------------------------------
 
     final credential =
     await _auth.createUserWithEmailAndPassword(
@@ -177,29 +127,25 @@ class AuthService {
     }
 
     // ----------------------------------------------------------
-    // UPDATE DISPLAY NAME
+    // 2. UPDATE DISPLAY NAME
     // ----------------------------------------------------------
 
     await user.updateDisplayName(
       name.trim(),
     );
-
-    // ----------------------------------------------------------
-    // UPLOAD IMAGE
-    // ----------------------------------------------------------
-
-    String? imageUrl;
+    Blob? imageBlob;
 
     if (profileImage != null) {
-      imageUrl = await uploadProfilePicture(
+      imageBlob = await prepareProfilePicture(
         profileImage,
-        user.uid,
       );
-    }
 
-    // ----------------------------------------------------------
-    // PATIENT DATA
-    // ----------------------------------------------------------
+      if (imageBlob == null) {
+        throw Exception(
+          'Unable to process profile image.',
+        );
+      }
+    }
 
     final patientData = <String, dynamic>{
       'uid': user.uid,
@@ -209,32 +155,29 @@ class AuthService {
       'dateOfBirth': dateOfBirth,
       'gender': gender,
       'role': 'patient',
-      'profileImage': imageUrl,
-      'authProvider': 'password',
-      'createdAt': FieldValue.serverTimestamp(),
-      'updatedAt': FieldValue.serverTimestamp(),
-    };
 
-    // ----------------------------------------------------------
-    // SAVE PATIENT
-    // ----------------------------------------------------------
+      // Actual image stored in Firestore
+      'profileImage': imageBlob,
+
+      'authProvider': 'password',
+
+      'createdAt':
+      FieldValue.serverTimestamp(),
+
+      'updatedAt':
+      FieldValue.serverTimestamp(),
+    };
 
     await _firestore
         .collection('users')
         .doc(user.uid)
-        .set(
-      patientData,
-    )
+        .set(patientData)
         .timeout(
       const Duration(seconds: 30),
     );
 
     return credential;
   }
-
-  // ============================================================
-  // REGISTER DOCTOR
-  // ============================================================
 
   Future<UserCredential> registerDoctor({
     required String name,
@@ -252,10 +195,6 @@ class AuthService {
     required String startTime,
     required String endTime,
   }) async {
-    // ----------------------------------------------------------
-    // 1. CREATE FIREBASE AUTH ACCOUNT
-    // ----------------------------------------------------------
-
     final credential =
     await _auth.createUserWithEmailAndPassword(
       email: email.trim(),
@@ -269,31 +208,23 @@ class AuthService {
         'Firebase did not return a user.',
       );
     }
-
-    // ----------------------------------------------------------
-    // 2. UPDATE FIREBASE DISPLAY NAME
-    // ----------------------------------------------------------
-
     await user.updateDisplayName(
       name.trim(),
     );
 
-    // ----------------------------------------------------------
-    // 3. UPLOAD PROFILE IMAGE
-    // ----------------------------------------------------------
-
-    String? imageUrl;
+    Blob? imageBlob;
 
     if (profileImage != null) {
-      imageUrl = await uploadProfilePicture(
+      imageBlob = await prepareProfilePicture(
         profileImage,
-        user.uid,
       );
-    }
 
-    // ----------------------------------------------------------
-    // 4. DOCTOR DATA
-    // ----------------------------------------------------------
+      if (imageBlob == null) {
+        throw Exception(
+          'Unable to process profile image.',
+        );
+      }
+    }
 
     final doctorData = <String, dynamic>{
       'uid': user.uid,
@@ -302,69 +233,39 @@ class AuthService {
       'name': name.trim(),
       'email': email.trim(),
       'phone': phone.trim(),
-
-      // Role
       'role': 'doctor',
-
-      // Profile image
-      'profileImage': imageUrl,
-
-      // Professional information
+      'profileImage': imageBlob,
       'specialization': specialization.trim(),
-      'medicalLicenseNumber':
-      medicalLicenseNumber.trim(),
+      'medicalLicenseNumber': medicalLicenseNumber.trim(),
       'experience': experience.trim(),
       'hospitalClinic': hospitalClinic.trim(),
       'qualification': qualification.trim(),
-      'consultationFee':
-      consultationFee.trim(),
+      'consultationFee': consultationFee.trim(),
 
       // Availability
       'workingDays':
       List<String>.from(workingDays),
-
       'startTime': startTime,
       'endTime': endTime,
-
       'isAvailable': true,
-
       // Authentication
       'authProvider': 'password',
-
-      // Dates
-      'createdAt':
-      FieldValue.serverTimestamp(),
-
-      'updatedAt':
-      FieldValue.serverTimestamp(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     };
-
-    // ----------------------------------------------------------
-    // 5. SAVE TO USERS COLLECTION
-    // ----------------------------------------------------------
 
     await _firestore
         .collection('users')
         .doc(user.uid)
-        .set(
-      doctorData,
-    )
+        .set(doctorData)
         .timeout(
       const Duration(seconds: 30),
     );
 
-    // ----------------------------------------------------------
-    // 6. SAVE TO DOCTORS COLLECTION
-    //
-    // THIS IS THE IMPORTANT PART
-    // ----------------------------------------------------------
-
     await _firestore
         .collection('doctors')
         .doc(user.uid)
-        .set(
-      doctorData,
-    )
+        .set(doctorData)
         .timeout(
       const Duration(seconds: 30),
     );
@@ -376,18 +277,11 @@ class AuthService {
     return credential;
   }
 
-  // ============================================================
-  // GOOGLE LOGIN
-  // ============================================================
-
   Future<
       ({
       UserCredential credential,
       AppUser? profile
       })> signInWithGoogle() async {
-    // ----------------------------------------------------------
-    // SELECT GOOGLE ACCOUNT
-    // ----------------------------------------------------------
 
     final googleUser =
     await _googleSignIn.signIn();
@@ -398,35 +292,20 @@ class AuthService {
       );
     }
 
-    // ----------------------------------------------------------
-    // GOOGLE AUTH
-    // ----------------------------------------------------------
-
     final googleAuth =
     await googleUser.authentication;
-
-    // ----------------------------------------------------------
-    // FIREBASE CREDENTIAL
-    // ----------------------------------------------------------
-
     final credential =
     GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
+      accessToken:
+      googleAuth.accessToken,
+      idToken:
+      googleAuth.idToken,
     );
-
-    // ----------------------------------------------------------
-    // SIGN IN TO FIREBASE
-    // ----------------------------------------------------------
 
     final userCredential =
     await _auth.signInWithCredential(
       credential,
     );
-
-    // ----------------------------------------------------------
-    // CHECK EXISTING PROFILE
-    // ----------------------------------------------------------
 
     final profile = await fetchUser(
       userCredential.user!.uid,
@@ -437,10 +316,6 @@ class AuthService {
     profile: profile,
     );
   }
-
-  // ============================================================
-  // COMPLETE GOOGLE PROFILE
-  // ============================================================
 
   Future<void> completeGoogleProfile({
     required String role,
@@ -463,35 +338,27 @@ class AuthService {
 
     File? profileImage,
   }) async {
-    // ----------------------------------------------------------
-    // GET CURRENT USER
-    // ----------------------------------------------------------
 
     final user = _auth.currentUser;
-
     if (user == null) {
       throw Exception(
         'No authenticated user.',
       );
     }
-
-    // ----------------------------------------------------------
-    // PROFILE IMAGE
-    // ----------------------------------------------------------
-
-    String? imageUrl = user.photoURL;
+    Blob? imageBlob;
 
     if (profileImage != null) {
-      imageUrl = await uploadProfilePicture(
+      imageBlob =
+      await prepareProfilePicture(
         profileImage,
-        user.uid,
       );
+
+      if (imageBlob == null) {
+        throw Exception(
+          'Unable to process profile image.',
+        );
+      }
     }
-
-    // ----------------------------------------------------------
-    // PROFILE DATA
-    // ----------------------------------------------------------
-
     final data = <String, dynamic>{
       'uid': user.uid,
 
@@ -506,7 +373,7 @@ class AuthService {
 
       'role': role,
 
-      'profileImage': imageUrl,
+      'profileImage': imageBlob,
 
       'dateOfBirth':
       dateOfBirth,
@@ -553,10 +420,6 @@ class AuthService {
       FieldValue.serverTimestamp(),
     };
 
-    // ----------------------------------------------------------
-    // SAVE TO USERS
-    // ----------------------------------------------------------
-
     await _firestore
         .collection('users')
         .doc(user.uid)
@@ -573,10 +436,6 @@ class AuthService {
         .timeout(
       const Duration(seconds: 30),
     );
-
-    // ----------------------------------------------------------
-    // SAVE GOOGLE DOCTOR TO DOCTORS COLLECTION
-    // ----------------------------------------------------------
 
     if (role == 'doctor') {
       await _firestore
@@ -601,11 +460,6 @@ class AuthService {
       );
     }
   }
-
-  // ============================================================
-  // UPDATE USER
-  // ============================================================
-
   Future<void> updateUser(
       String uid,
       Map<String, dynamic> data,
@@ -634,11 +488,6 @@ class AuthService {
       );
     }
   }
-
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
   Future<void> logout() async {
     try {
       await _googleSignIn.signOut();
@@ -648,11 +497,6 @@ class AuthService {
 
     await _auth.signOut();
   }
-
-  // ============================================================
-  // FIREBASE ERROR MESSAGE
-  // ============================================================
-
   String authErrorMessage(
       Object error,
       ) {

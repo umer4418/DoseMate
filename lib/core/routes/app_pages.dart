@@ -66,10 +66,6 @@ class AppPages {
       page: () => const ForgotPasswordView(),
     ),
 
-    // ============================================================
-    // GOOGLE AUTH
-    // ============================================================
-
     GetPage(
       name: AppRoutes.googleRole,
       page: () => const GoogleRoleView(),
@@ -86,10 +82,6 @@ class AppPages {
         googleFlow: true,
       ),
     ),
-
-    // ============================================================
-    // PATIENT
-    // ============================================================
 
     GetPage(
       name: AppRoutes.patientShell,
@@ -121,9 +113,6 @@ class AppPages {
       }),
     ),
 
-    // ============================================================
-    // DOCTOR
-    // ============================================================
 
     GetPage(
       name: AppRoutes.doctorShell,
@@ -151,10 +140,6 @@ class AppPages {
       }),
     ),
 
-    // ============================================================
-    // BOOK APPOINTMENT
-    // ============================================================
-
     GetPage(
       name: AppRoutes.bookAppointment,
       page: () => const BookAppointmentView(),
@@ -168,10 +153,6 @@ class AppPages {
         }
       }),
     ),
-
-    // ============================================================
-    // CHAT ROOM
-    // ============================================================
 
     GetPage(
       name: AppRoutes.chatRoom,

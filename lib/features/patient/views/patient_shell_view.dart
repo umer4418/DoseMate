@@ -1105,11 +1105,9 @@ class _EditPatientProfileViewState
   }
 
   void _saveProfile() {
-    final name =
-    nameController.text.trim();
+    final name = nameController.text.trim();
 
-    final phone =
-    phoneController.text.trim();
+    final phone = phoneController.text.trim();
 
     if (name.isEmpty) {
       Get.snackbar(
