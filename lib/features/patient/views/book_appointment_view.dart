@@ -821,10 +821,8 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                                   ),
                                 ),
                                 child: const Icon(
-                                  Icons
-                                      .calendar_month_rounded,
-                                  color:
-                                  AppColors.primary,
+                                  Icons.calendar_month_rounded,
+                                  color: AppColors.primary,
                                   size: 23,
                                 ),
                               ),

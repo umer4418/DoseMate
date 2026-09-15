@@ -488,10 +488,8 @@ class PatientHomeTab extends GetView<PatientHomeController> {
                     ),
                   ),
                   child: const Icon(
-                    Icons
-                        .notifications_active_rounded,
-                    color:
-                    AppColors.primary,
+                    Icons.notifications_active_rounded,
+                    color: AppColors.primary,
                   ),
                 ),
 

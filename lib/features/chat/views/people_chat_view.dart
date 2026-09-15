@@ -26,10 +26,6 @@ class PeopleChatView extends GetView<ChatListController> {
         body: SafeArea(
           child: Column(
             children: [
-              // ============================================================
-              // HEADER
-              // ============================================================
-
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
@@ -88,10 +84,6 @@ class PeopleChatView extends GetView<ChatListController> {
                     ),
 
                     const SizedBox(height: 20),
-
-                    // ======================================================
-                    // CUSTOM TAB BAR
-                    // ======================================================
                     Container(
                       height: 48,
                       decoration: BoxDecoration(
@@ -139,10 +131,6 @@ class PeopleChatView extends GetView<ChatListController> {
                   ],
                 ),
               ),
-
-              // ============================================================
-              // TAB CONTENT
-              // ============================================================
               Expanded(
                 child: TabBarView(
                   children: [
@@ -161,10 +149,6 @@ class PeopleChatView extends GetView<ChatListController> {
     );
   }
 }
-
-// ============================================================================
-// INBOX TAB
-// ============================================================================
 
 class _InboxTab extends GetView<ChatListController> {
   const _InboxTab();
@@ -215,10 +199,6 @@ class _InboxTab extends GetView<ChatListController> {
   }
 }
 
-// ============================================================================
-// CHAT CARD
-// ============================================================================
-
 class _ChatCard extends StatelessWidget {
   const _ChatCard({
     required this.name,
@@ -260,8 +240,6 @@ class _ChatCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Avatar
-
               Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -376,10 +354,6 @@ class _ChatCard extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// PEOPLE TAB
-// ============================================================================
-
 class _PeopleTab extends GetView<ChatListController> {
   const _PeopleTab({required this.role});
 
@@ -389,10 +363,6 @@ class _PeopleTab extends GetView<ChatListController> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // ================================================================
-        // SEARCH BAR
-        // ================================================================
-
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Container(
@@ -443,10 +413,6 @@ class _PeopleTab extends GetView<ChatListController> {
             ),
           ),
         ),
-
-        // ================================================================
-        // PEOPLE LIST
-        // ================================================================
         Expanded(
           child: Obx(() {
             final people = controller.filtered(role: role);
@@ -475,10 +441,6 @@ class _PeopleTab extends GetView<ChatListController> {
     );
   }
 }
-
-// ============================================================================
-// PERSON CARD
-// ============================================================================
 
 class _PersonCard extends StatelessWidget {
   const _PersonCard({
@@ -608,11 +570,6 @@ class _PersonCard extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// EMPTY CHAT STATE
-// ============================================================================
-
 class _EmptyChatState extends StatelessWidget {
   const _EmptyChatState();
 
@@ -662,10 +619,6 @@ class _EmptyChatState extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// EMPTY PEOPLE STATE
-// ============================================================================
 
 class _EmptyPeopleState extends StatelessWidget {
   const _EmptyPeopleState({required this.role});
