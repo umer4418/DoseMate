@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../models/user_model.dart';
@@ -39,7 +40,7 @@ class AuthService {
 
       return Blob(bytes);
     } catch (e) {
-      print('Profile image error: $e');
+      debugPrint('Profile image error: $e');
       return null;
     }
   }
@@ -455,7 +456,7 @@ class AuthService {
         const Duration(seconds: 30),
       );
 
-      print(
+      debugPrint(
         'GOOGLE DOCTOR SAVED SUCCESSFULLY: ${user.uid}',
       );
     }

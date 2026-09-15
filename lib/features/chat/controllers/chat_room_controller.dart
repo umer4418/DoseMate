@@ -10,12 +10,12 @@ class ChatRoomController extends GetxController {
   ChatRoomController({
     required this.dataService,
     required this.chatId,
-    required this.other,
+    required this.user,
   });
 
   final DataService dataService;
   final String chatId;
-  final AppUser other;
+  final AppUser user;
   final messages = <MessageModel>[].obs;
   final textController = TextEditingController();
 

@@ -164,7 +164,7 @@ class AppPages {
           ChatRoomController(
             dataService: Get.find(),
             chatId: args['chatId'] as String,
-            other: args['other'] as AppUser,
+            user: args['other'] as AppUser,
           ),
         );
       }),

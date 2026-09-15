@@ -15,11 +15,11 @@ class ChatRoomView extends GetView<ChatRoomController> {
       appBar: AppBar(
         title: Row(
           children: [
-            UserAvatar(user: controller.other, radius: 18),
+            UserAvatar(user: controller.user, radius: 18),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                controller.other.name,
+                controller.user.name,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

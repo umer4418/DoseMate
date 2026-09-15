@@ -88,10 +88,6 @@ class DoctorShellView extends GetView<DoctorHomeController> {
   }
 }
 
-// ============================================================
-// DOCTOR HOME
-// ============================================================
-
 class DoctorHomeTab extends GetView<DoctorHomeController> {
   const DoctorHomeTab({super.key});
 
@@ -113,11 +109,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
           30,
         ),
         children: [
-
-          // ==================================================
-          // TOP HEADER
-          // ==================================================
-
           Obx(
                 () {
               final user = auth.currentUser.value;
@@ -206,10 +197,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
                       ),
                     ),
                   ),
-
-                  // ==================================================
-                  // NOTIFICATIONS
-                  // ==================================================
 
                   Container(
                     decoration: BoxDecoration(
@@ -304,10 +291,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
           ),
 
           const SizedBox(height: 24),
-
-          // ==================================================
-          // AVAILABILITY
-          // ==================================================
 
           Obx(
                 () {
@@ -428,10 +411,6 @@ class DoctorHomeTab extends GetView<DoctorHomeController> {
           ),
 
           const SizedBox(height: 20),
-
-          // ==================================================
-          // PRACTICE
-          // ==================================================
 
           Container(
             padding:
