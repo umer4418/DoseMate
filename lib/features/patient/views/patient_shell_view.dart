@@ -44,7 +44,7 @@ class PatientShellView extends GetView<PatientHomeController> {
           width: 66,
           height: 66,
           child: FloatingActionButton(
-            elevation: 6,
+            elevation: 7,
             backgroundColor: AppColors.primary,
             shape: const CircleBorder(),
             onPressed: () {
@@ -124,9 +124,9 @@ class _PatientBottomBar extends StatelessWidget {
 
           Expanded(
             child: _BottomBarItem(
-              icon: Icons.chat_bubble_outline_rounded,
-              selectedIcon: Icons.chat_bubble_rounded,
-              label: 'Chat',
+              icon: Icons.message,
+              selectedIcon: Icons.message,
+              label: 'chats',
               selected: selectedIndex == 3,
               onTap: () => onTap(3),
             ),
@@ -184,9 +184,7 @@ class _BottomBarItem extends StatelessWidget {
                     : const Color(0xFF87909D),
               ),
             ),
-
             const SizedBox(height: 3),
-
             Text(
               label,
               style: TextStyle(
@@ -243,11 +241,21 @@ class PatientHomeTab extends GetView<PatientHomeController> {
           }),
 
           const SizedBox(height: 24),
-
           const _MedicineSummaryCard(),
           const SizedBox(height: 20),
           const _HealthBanner(),
-          const SizedBox(height: 26),
+          const SizedBox(height: 22),
+
+          _HomeAppointmentCard(
+            onBook: () {
+              Get.toNamed(AppRoutes.bookAppointment);
+            },
+            onViewAppointments: () {
+              controller.tabIndex.value = 4;
+            },
+          ),
+
+          const SizedBox(height: 28),
           const _SectionHeader(
             title: 'Quick actions',
             subtitle:
@@ -306,29 +314,50 @@ class PatientHomeTab extends GetView<PatientHomeController> {
               ),
 
               _ActionCard(
-                icon: Icons.chat_rounded,
-                title: 'Doctor chat',
-                subtitle: 'Message your doctor',
+                icon: Icons.history_rounded,
+                title: 'My visits',
+                subtitle: 'View appointments',
                 backgroundColor:
                 const Color(0xFFF3EDFF),
                 iconBackground:
                 const Color(0xFFE6D9FF),
                 onTap: () {
-                  controller.tabIndex.value = 3;
+                  controller.tabIndex.value = 4;
                 },
               ),
             ],
           ),
 
-          const SizedBox(height: 26),
-
+          const SizedBox(height: 28),
           _DoctorsBanner(
             onTap: () {
               controller.tabIndex.value = 2;
             },
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 30),
+          _AppointmentSectionHeader(
+            onViewAll: () {
+              controller.tabIndex.value = 4;
+            },
+          ),
+
+          const SizedBox(height: 13),
+          _AppointmentPreviewCard(
+            onTap: () {
+              controller.tabIndex.value = 4;
+            },
+            onBook: () {
+              Get.toNamed(AppRoutes.bookAppointment);
+            },
+          ),
+
+          const SizedBox(height: 30),
+
+          // ============================================================
+          // MEDICINES
+          // ============================================================
+
           Row(
             children: [
               const Expanded(
@@ -413,6 +442,10 @@ class PatientHomeTab extends GetView<PatientHomeController> {
     );
   }
 
+  // ================================================================
+  // PATIENT PROFILE
+  // ================================================================
+
   void _showPatientProfile(
       BuildContext context,
       AppUser? user,
@@ -424,6 +457,10 @@ class PatientHomeTab extends GetView<PatientHomeController> {
       isScrollControlled: true,
     );
   }
+
+  // ================================================================
+  // MEDICINE NOTIFICATIONS
+  // ================================================================
 
   void _showMedicineNotifications(
       BuildContext context,
@@ -455,7 +492,6 @@ class PatientHomeTab extends GetView<PatientHomeController> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
             Container(
               width: 42,
               height: 4,
@@ -472,7 +508,6 @@ class PatientHomeTab extends GetView<PatientHomeController> {
               ),
             ),
 
-            // Header
             Row(
               children: [
                 Container(
@@ -498,8 +533,7 @@ class PatientHomeTab extends GetView<PatientHomeController> {
                 const Expanded(
                   child: Column(
                     crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
+                    CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Medicine reminders',
@@ -600,8 +634,7 @@ class PatientHomeTab extends GetView<PatientHomeController> {
 
                     return _NotificationMedicineCard(
                       medicineName:
-                      reminder
-                          .medicineName,
+                      reminder.medicineName,
                       dosage:
                       reminder.dosage,
                       times: reminder.times
@@ -622,6 +655,406 @@ class PatientHomeTab extends GetView<PatientHomeController> {
         ),
       ),
       isScrollControlled: true,
+    );
+  }
+}
+
+class _HomeAppointmentCard extends StatelessWidget {
+  const _HomeAppointmentCard({
+    required this.onBook,
+    required this.onViewAppointments,
+  });
+
+  final VoidCallback onBook;
+  final VoidCallback onViewAppointments;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(23),
+        border: Border.all(
+          color: AppColors.border,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.035),
+            blurRadius: 18,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: AppColors.primary
+                      .withOpacity(.10),
+                  borderRadius:
+                  BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.calendar_month_rounded,
+                  color: AppColors.primary,
+                  size: 26,
+                ),
+              ),
+
+              const SizedBox(width: 13),
+
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Appointments',
+                      style: TextStyle(
+                        color: AppColors.darkText,
+                        fontSize: 17,
+                        fontWeight:
+                        FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Manage your doctor visits',
+                      style: TextStyle(
+                        color:
+                        AppColors.secondaryText,
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              IconButton(
+                onPressed: onViewAppointments,
+                tooltip: 'View appointments',
+                style: IconButton.styleFrom(
+                  backgroundColor:
+                  AppColors.primary
+                      .withOpacity(.08),
+                ),
+                icon: const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(13),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7FAFE),
+              borderRadius:
+              BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.border,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary
+                        .withOpacity(.09),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.event_available_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Have an upcoming visit?',
+                        style: TextStyle(
+                          color:
+                          AppColors.darkText,
+                          fontSize: 12.5,
+                          fontWeight:
+                          FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        'Check your appointment records or book a new visit.',
+                        style: TextStyle(
+                          color:
+                          AppColors.secondaryText,
+                          fontSize: 10.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 13),
+
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed:
+                  onViewAppointments,
+                  icon: const Icon(
+                    Icons.history_rounded,
+                    size: 18,
+                  ),
+                  label: const Text(
+                    'My appointments',
+                    style: TextStyle(
+                      fontWeight:
+                      FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                  style:
+                  OutlinedButton.styleFrom(
+                    foregroundColor:
+                    AppColors.primary,
+                    side: BorderSide(
+                      color: AppColors.primary
+                          .withOpacity(.25),
+                    ),
+                    padding:
+                    const EdgeInsets
+                        .symmetric(
+                      vertical: 13,
+                    ),
+                    shape:
+                    RoundedRectangleBorder(
+                      borderRadius:
+                      BorderRadius.circular(
+                        13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 10),
+
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: onBook,
+                  icon: const Icon(
+                    Icons.add_rounded,
+                    size: 19,
+                  ),
+                  label: const Text(
+                    'Book appointment',
+                    style: TextStyle(
+                      fontWeight:
+                      FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                  style:
+                  ElevatedButton.styleFrom(
+                    backgroundColor:
+                    AppColors.primary,
+                    foregroundColor:
+                    Colors.white,
+                    elevation: 0,
+                    padding:
+                    const EdgeInsets
+                        .symmetric(
+                      vertical: 13,
+                    ),
+                    shape:
+                    RoundedRectangleBorder(
+                      borderRadius:
+                      BorderRadius.circular(
+                        13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AppointmentSectionHeader
+    extends StatelessWidget {
+  const _AppointmentSectionHeader({
+    required this.onViewAll,
+  });
+
+  final VoidCallback onViewAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+              Text(
+                'My appointments',
+                style: TextStyle(
+                  color: AppColors.darkText,
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              SizedBox(height: 3),
+              Text(
+                'Keep track of your doctor visits',
+                style: TextStyle(
+                  color:
+                  AppColors.secondaryText,
+                  fontSize: 12.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        TextButton(
+          onPressed: onViewAll,
+          child: const Text(
+            'View all',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AppointmentPreviewCard
+    extends StatelessWidget {
+  const _AppointmentPreviewCard({
+    required this.onTap,
+    required this.onBook,
+  });
+
+  final VoidCallback onTap;
+  final VoidCallback onBook;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(21),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(21),
+        child: Container(
+          padding: const EdgeInsets.all(17),
+          decoration: BoxDecoration(
+            borderRadius:
+            BorderRadius.circular(21),
+            border: Border.all(
+              color: AppColors.border,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color:
+                Colors.black.withOpacity(.025),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: AppColors.primary
+                      .withOpacity(.09),
+                  borderRadius:
+                  BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.medical_services_rounded,
+                  color: AppColors.primary,
+                  size: 27,
+                ),
+              ),
+
+              const SizedBox(width: 13),
+
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Appointment records',
+                      style: TextStyle(
+                        color:
+                        AppColors.darkText,
+                        fontSize: 14,
+                        fontWeight:
+                        FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      'View your confirmed, pending and completed appointments.',
+                      maxLines: 2,
+                      style: TextStyle(
+                        color:
+                        AppColors.secondaryText,
+                        fontSize: 11.5,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color:
+                AppColors.secondaryText,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -680,8 +1113,7 @@ class _PatientTopBar extends StatelessWidget {
                   Expanded(
                     child: Column(
                       crossAxisAlignment:
-                      CrossAxisAlignment
-                          .start,
+                      CrossAxisAlignment.start,
                       children: [
                         const Text(
                           'Welcome back 👋',
@@ -693,9 +1125,7 @@ class _PatientTopBar extends StatelessWidget {
                             FontWeight.w500,
                           ),
                         ),
-
                         const SizedBox(height: 2),
-
                         Text(
                           userName,
                           maxLines: 1,
@@ -829,846 +1259,8 @@ class _NotificationButton
   }
 }
 
-class _PatientProfileSheet
-    extends StatelessWidget {
-  const _PatientProfileSheet({
-    required this.user,
-  });
-
-  final AppUser? user;
-
-  @override
-  Widget build(BuildContext context) {
-    final auth =
-    Get.find<AuthController>();
-
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight:
-        MediaQuery.of(context).size.height *
-            .82,
-      ),
-      padding:
-      const EdgeInsets.fromLTRB(
-        20,
-        12,
-        20,
-        25,
-      ),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF7FAFE),
-        borderRadius:
-        BorderRadius.vertical(
-          top: Radius.circular(30),
-        ),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Handle
-            Container(
-              width: 42,
-              height: 4,
-              margin:
-              const EdgeInsets.only(
-                bottom: 20,
-              ),
-              decoration:
-              BoxDecoration(
-                color:
-                const Color(0xFFD6DCE5),
-                borderRadius:
-                BorderRadius.circular(10),
-              ),
-            ),
-
-            // Avatar
-            Container(
-              padding:
-              const EdgeInsets.all(3),
-              decoration:
-              BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary
-                      .withOpacity(.25),
-                  width: 2,
-                ),
-              ),
-              child: UserAvatar(
-                user: user,
-                radius: 43,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Text(
-              user?.name ?? 'Patient',
-              style: const TextStyle(
-                color:
-                AppColors.darkText,
-                fontSize: 21,
-                fontWeight:
-                FontWeight.w800,
-              ),
-            ),
-
-            const SizedBox(height: 4),
-
-            Text(
-              user?.email ?? 'Patient account',
-              style: const TextStyle(
-                color:
-                AppColors.secondaryText,
-                fontSize: 12,
-              ),
-            ),
-
-            const SizedBox(height: 22),
-
-            // Edit Profile
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Get.back();
-
-                  Get.to(
-                        () => _EditPatientProfileView(
-                      user: user,
-                    ),
-                  );
-                },
-                icon: const Icon(
-                  Icons.edit_rounded,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Edit Profile',
-                  style: TextStyle(
-                    fontWeight:
-                    FontWeight.w700,
-                  ),
-                ),
-                style:
-                ElevatedButton.styleFrom(
-                  backgroundColor:
-                  AppColors.primary,
-                  foregroundColor:
-                  Colors.white,
-                  elevation: 0,
-                  padding:
-                  const EdgeInsets.symmetric(
-                    vertical: 14,
-                  ),
-                  shape:
-                  RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(
-                      15,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            _ProfileInfoRow(
-              icon:
-              Icons.person_outline_rounded,
-              title: 'Full name',
-              value:
-              user?.name ?? 'Not provided',
-            ),
-
-            _ProfileInfoRow(
-              icon:
-              Icons.email_outlined,
-              title: 'Email',
-              value:
-              user?.email ?? 'Not provided',
-            ),
-
-            _ProfileInfoRow(
-              icon:
-              Icons.phone_outlined,
-              title: 'Phone',
-              value:
-              user?.phone ?? 'Not provided',
-            ),
-
-            _ProfileInfoRow(
-              icon:
-              Icons.medical_information_outlined,
-              title: 'Account type',
-              value: 'Patient',
-            ),
-
-            const SizedBox(height: 8),
-
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Get.back();
-                  auth.logout();
-                },
-                icon: const Icon(
-                  Icons.logout_rounded,
-                  size: 18,
-                ),
-                label: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    fontWeight:
-                    FontWeight.w700,
-                  ),
-                ),
-                style:
-                OutlinedButton.styleFrom(
-                  foregroundColor:
-                  const Color(
-                    0xFFD63B4A,
-                  ),
-                  side:
-                  const BorderSide(
-                    color:
-                    Color(0xFFF0C8CD),
-                  ),
-                  padding:
-                  const EdgeInsets.symmetric(
-                    vertical: 13,
-                  ),
-                  shape:
-                  RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(
-                      15,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _EditPatientProfileView
-    extends StatefulWidget {
-  const _EditPatientProfileView({
-    required this.user,
-  });
-
-  final AppUser? user;
-
-  @override
-  State<_EditPatientProfileView>
-  createState() =>
-      _EditPatientProfileViewState();
-}
-
-class _EditPatientProfileViewState
-    extends State<_EditPatientProfileView> {
-  late final TextEditingController
-  nameController;
-
-  late final TextEditingController
-  phoneController;
-
-  @override
-  void initState() {
-    super.initState();
-
-    nameController =
-        TextEditingController(
-          text: widget.user?.name ?? '',
-        );
-
-    phoneController =
-        TextEditingController(
-          text: widget.user?.phone ?? '',
-        );
-  }
-
-  @override
-  void dispose() {
-    nameController.dispose();
-    phoneController.dispose();
-    super.dispose();
-  }
-
-  void _saveProfile() {
-    final name = nameController.text.trim();
-
-    final phone = phoneController.text.trim();
-
-    if (name.isEmpty) {
-      Get.snackbar(
-        'Required',
-        'Please enter your name.',
-        snackPosition:
-        SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
-    Get.back();
-
-    Get.snackbar(
-      'Profile',
-      'Profile information entered successfully.',
-      snackPosition:
-      SnackPosition.BOTTOM,
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor:
-      const Color(0xFFF5F8FC),
-
-      appBar: AppBar(
-        backgroundColor:
-        const Color(0xFFF5F8FC),
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Get.back(),
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 20,
-          ),
-        ),
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            color: AppColors.darkText,
-          ),
-        ),
-        centerTitle: false,
-      ),
-
-      body: ListView(
-        padding:
-        const EdgeInsets.all(20),
-        children: [
-          // Profile preview
-          Center(
-            child: Container(
-              padding:
-              const EdgeInsets.all(3),
-              decoration:
-              BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primary
-                      .withOpacity(.25),
-                  width: 2,
-                ),
-              ),
-              child: UserAvatar(
-                user: widget.user,
-                radius: 48,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          Center(
-            child: Text(
-              'Update your information',
-              style: TextStyle(
-                color:
-                AppColors.secondaryText,
-                fontSize: 12,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 30),
-
-          _EditField(
-            controller:
-            nameController,
-            label: 'Full name',
-            hint:
-            'Enter your full name',
-            icon:
-            Icons.person_outline_rounded,
-          ),
-
-          const SizedBox(height: 16),
-
-          _EditField(
-            controller:
-            phoneController,
-            label: 'Phone number',
-            hint:
-            'Enter your phone number',
-            icon:
-            Icons.phone_outlined,
-            keyboardType:
-            TextInputType.phone,
-          ),
-
-          const SizedBox(height: 16),
-
-          // Email - read only
-          Container(
-            padding:
-            const EdgeInsets.all(15),
-            decoration:
-            BoxDecoration(
-              color: Colors.white,
-              borderRadius:
-              BorderRadius.circular(17),
-              border: Border.all(
-                color: AppColors.border,
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration:
-                  BoxDecoration(
-                    color: AppColors.primary
-                        .withOpacity(.08),
-                    borderRadius:
-                    BorderRadius.circular(
-                      12,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.email_outlined,
-                    color:
-                    AppColors.primary,
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
-                    children: [
-                      const Text(
-                        'Email',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors
-                              .secondaryText,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        widget.user?.email ??
-                            'Not available',
-                        style:
-                        const TextStyle(
-                          fontSize: 13,
-                          fontWeight:
-                          FontWeight.w700,
-                          color: AppColors
-                              .darkText,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const Icon(
-                  Icons.lock_outline_rounded,
-                  size: 18,
-                  color:
-                  AppColors.secondaryText,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 30),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _saveProfile,
-              style:
-              ElevatedButton.styleFrom(
-                backgroundColor:
-                AppColors.primary,
-                foregroundColor:
-                Colors.white,
-                elevation: 0,
-                padding:
-                const EdgeInsets.symmetric(
-                  vertical: 16,
-                ),
-                shape:
-                RoundedRectangleBorder(
-                  borderRadius:
-                  BorderRadius.circular(
-                    16,
-                  ),
-                ),
-              ),
-              child: const Text(
-                'Save Changes',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight:
-                  FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EditField
-    extends StatelessWidget {
-  const _EditField({
-    required this.controller,
-    required this.label,
-    required this.hint,
-    required this.icon,
-    this.keyboardType,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final String hint;
-  final IconData icon;
-  final TextInputType? keyboardType;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.darkText,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.darkText,
-          ),
-          decoration:
-          InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(
-              icon,
-              size: 21,
-              color:
-              AppColors.primary,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            border:
-            OutlineInputBorder(
-              borderRadius:
-              BorderRadius.circular(16),
-              borderSide:
-              BorderSide.none,
-            ),
-            enabledBorder:
-            OutlineInputBorder(
-              borderRadius:
-              BorderRadius.circular(16),
-              borderSide:
-              const BorderSide(
-                color: AppColors.border,
-              ),
-            ),
-            focusedBorder:
-            OutlineInputBorder(
-              borderRadius:
-              BorderRadius.circular(16),
-              borderSide:
-              const BorderSide(
-                color:
-                AppColors.primary,
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ProfileInfoRow
-    extends StatelessWidget {
-  const _ProfileInfoRow({
-    required this.icon,
-    required this.title,
-    required this.value,
-  });
-
-  final IconData icon;
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin:
-      const EdgeInsets.only(
-        bottom: 10,
-      ),
-      padding:
-      const EdgeInsets.all(14),
-      decoration:
-      BoxDecoration(
-        color: Colors.white,
-        borderRadius:
-        BorderRadius.circular(17),
-        border: Border.all(
-          color: AppColors.border,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration:
-            BoxDecoration(
-              color: AppColors.primary
-                  .withOpacity(.08),
-              borderRadius:
-              BorderRadius.circular(
-                12,
-              ),
-            ),
-            child: Icon(
-              icon,
-              color:
-              AppColors.primary,
-              size: 20,
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style:
-                  const TextStyle(
-                    color: AppColors
-                        .secondaryText,
-                    fontSize: 10.5,
-                  ),
-                ),
-
-                const SizedBox(height: 3),
-
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow:
-                  TextOverflow.ellipsis,
-                  style:
-                  const TextStyle(
-                    color:
-                    AppColors.darkText,
-                    fontSize: 13,
-                    fontWeight:
-                    FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NotificationMedicineCard
-    extends StatelessWidget {
-  const _NotificationMedicineCard({
-    required this.medicineName,
-    required this.dosage,
-    required this.times,
-    required this.onTaken,
-  });
-
-  final String medicineName;
-  final String dosage;
-  final String times;
-  final VoidCallback onTaken;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding:
-      const EdgeInsets.all(15),
-      decoration:
-      BoxDecoration(
-        color: Colors.white,
-        borderRadius:
-        BorderRadius.circular(19),
-        border: Border.all(
-          color: AppColors.border,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color:
-            Colors.black.withOpacity(
-              .025,
-            ),
-            blurRadius: 10,
-            offset:
-            const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration:
-            BoxDecoration(
-              color: AppColors.primary
-                  .withOpacity(.10),
-              borderRadius:
-              BorderRadius.circular(
-                15,
-              ),
-            ),
-            child: const Icon(
-              Icons.medication_rounded,
-              color:
-              AppColors.primary,
-              size: 25,
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment
-                  .start,
-              children: [
-                Text(
-                  medicineName,
-                  style:
-                  const TextStyle(
-                    color:
-                    AppColors.darkText,
-                    fontSize: 14,
-                    fontWeight:
-                    FontWeight.w800,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  dosage,
-                  style:
-                  const TextStyle(
-                    color: AppColors
-                        .secondaryText,
-                    fontSize: 11.5,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Row(
-                  children: [
-                    const Icon(
-                      Icons
-                          .access_time_rounded,
-                      size: 14,
-                      color:
-                      AppColors.primary,
-                    ),
-                    const SizedBox(
-                        width: 4),
-                    Expanded(
-                      child: Text(
-                        times,
-                        style:
-                        const TextStyle(
-                          color: AppColors
-                              .secondaryText,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          IconButton(
-            tooltip:
-            'Mark as taken',
-            onPressed: onTaken,
-            style:
-            IconButton.styleFrom(
-              backgroundColor:
-              AppColors.primary
-                  .withOpacity(.10),
-            ),
-            icon: const Icon(
-              Icons.check_rounded,
-              color:
-              AppColors.primary,
-              size: 20,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _MedicineSummaryCard
-    extends GetView<
-        PatientHomeController> {
+    extends GetView<PatientHomeController> {
   const _MedicineSummaryCard();
 
   @override
@@ -1964,7 +1556,6 @@ class _HealthBanner
     );
   }
 }
-
 class _DoctorsBanner
     extends StatelessWidget {
   const _DoctorsBanner({
@@ -1985,10 +1576,8 @@ class _DoctorsBanner
         BorderRadius.circular(24),
         gradient:
         const LinearGradient(
-          begin:
-          Alignment.centerLeft,
-          end:
-          Alignment.centerRight,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
           colors: [
             Color(0xFFE8F1FF),
             Color(0xFFF3F7FF),
@@ -2130,7 +1719,6 @@ class _DoctorsBanner
     );
   }
 }
-
 class _SectionHeader
     extends StatelessWidget {
   const _SectionHeader({
@@ -2445,6 +2033,843 @@ class _DoseCard
                 fontWeight:
                 FontWeight.w700,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotificationMedicineCard
+    extends StatelessWidget {
+  const _NotificationMedicineCard({
+    required this.medicineName,
+    required this.dosage,
+    required this.times,
+    required this.onTaken,
+  });
+
+  final String medicineName;
+  final String dosage;
+  final String times;
+  final VoidCallback onTaken;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding:
+      const EdgeInsets.all(15),
+      decoration:
+      BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+        BorderRadius.circular(19),
+        border: Border.all(
+          color: AppColors.border,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color:
+            Colors.black.withOpacity(
+              .025,
+            ),
+            blurRadius: 10,
+            offset:
+            const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration:
+            BoxDecoration(
+              color: AppColors.primary
+                  .withOpacity(.10),
+              borderRadius:
+              BorderRadius.circular(
+                15,
+              ),
+            ),
+            child: const Icon(
+              Icons.medication_rounded,
+              color:
+              AppColors.primary,
+              size: 25,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment
+                  .start,
+              children: [
+                Text(
+                  medicineName,
+                  style:
+                  const TextStyle(
+                    color:
+                    AppColors.darkText,
+                    fontSize: 14,
+                    fontWeight:
+                    FontWeight.w800,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  dosage,
+                  style:
+                  const TextStyle(
+                    color: AppColors
+                        .secondaryText,
+                    fontSize: 11.5,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Row(
+                  children: [
+                    const Icon(
+                      Icons
+                          .access_time_rounded,
+                      size: 14,
+                      color:
+                      AppColors.primary,
+                    ),
+                    const SizedBox(
+                        width: 4),
+                    Expanded(
+                      child: Text(
+                        times,
+                        style:
+                        const TextStyle(
+                          color: AppColors
+                              .secondaryText,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          IconButton(
+            tooltip:
+            'Mark as taken',
+            onPressed: onTaken,
+            style:
+            IconButton.styleFrom(
+              backgroundColor:
+              AppColors.primary
+                  .withOpacity(.10),
+            ),
+            icon: const Icon(
+              Icons.check_rounded,
+              color:
+              AppColors.primary,
+              size: 20,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PatientProfileSheet
+    extends StatelessWidget {
+  const _PatientProfileSheet({
+    required this.user,
+  });
+
+  final AppUser? user;
+
+  @override
+  Widget build(BuildContext context) {
+    final auth =
+    Get.find<AuthController>();
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight:
+        MediaQuery.of(context).size.height *
+            .82,
+      ),
+      padding:
+      const EdgeInsets.fromLTRB(
+        20,
+        12,
+        20,
+        25,
+      ),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF7FAFE),
+        borderRadius:
+        BorderRadius.vertical(
+          top: Radius.circular(30),
+        ),
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              width: 42,
+              height: 4,
+              margin:
+              const EdgeInsets.only(
+                bottom: 20,
+              ),
+              decoration:
+              BoxDecoration(
+                color:
+                const Color(0xFFD6DCE5),
+                borderRadius:
+                BorderRadius.circular(10),
+              ),
+            ),
+
+            Container(
+              padding:
+              const EdgeInsets.all(3),
+              decoration:
+              BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primary
+                      .withOpacity(.25),
+                  width: 2,
+                ),
+              ),
+              child: UserAvatar(
+                user: user,
+                radius: 43,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              user?.name ?? 'Patient',
+              style: const TextStyle(
+                color:
+                AppColors.darkText,
+                fontSize: 21,
+                fontWeight:
+                FontWeight.w800,
+              ),
+            ),
+
+            const SizedBox(height: 4),
+
+            Text(
+              user?.email ?? 'Patient account',
+              style: const TextStyle(
+                color:
+                AppColors.secondaryText,
+                fontSize: 12,
+              ),
+            ),
+
+            const SizedBox(height: 22),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Get.back();
+
+                  Get.to(
+                        () => _EditPatientProfileView(
+                      user: user,
+                    ),
+                  );
+                },
+                icon: const Icon(
+                  Icons.edit_rounded,
+                  size: 18,
+                ),
+                label: const Text(
+                  'Edit Profile',
+                  style: TextStyle(
+                    fontWeight:
+                    FontWeight.w700,
+                  ),
+                ),
+                style:
+                ElevatedButton.styleFrom(
+                  backgroundColor:
+                  AppColors.primary,
+                  foregroundColor:
+                  Colors.white,
+                  elevation: 0,
+                  padding:
+                  const EdgeInsets
+                      .symmetric(
+                    vertical: 14,
+                  ),
+                  shape:
+                  RoundedRectangleBorder(
+                    borderRadius:
+                    BorderRadius.circular(
+                      15,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            _ProfileInfoRow(
+              icon:
+              Icons.person_outline_rounded,
+              title: 'Full name',
+              value:
+              user?.name ?? 'Not provided',
+            ),
+
+            _ProfileInfoRow(
+              icon:
+              Icons.email_outlined,
+              title: 'Email',
+              value:
+              user?.email ?? 'Not provided',
+            ),
+
+            _ProfileInfoRow(
+              icon:
+              Icons.phone_outlined,
+              title: 'Phone',
+              value:
+              user?.phone ?? 'Not provided',
+            ),
+
+            const _ProfileInfoRow(
+              icon:
+              Icons.medical_information_outlined,
+              title: 'Account type',
+              value: 'Patient',
+            ),
+
+            const SizedBox(height: 8),
+
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Get.back();
+                  auth.logout();
+                },
+                icon: const Icon(
+                  Icons.logout_rounded,
+                  size: 18,
+                ),
+                label: const Text(
+                  'Logout',
+                  style: TextStyle(
+                    fontWeight:
+                    FontWeight.w700,
+                  ),
+                ),
+                style:
+                OutlinedButton.styleFrom(
+                  foregroundColor:
+                  const Color(
+                    0xFFD63B4A,
+                  ),
+                  side:
+                  const BorderSide(
+                    color:
+                    Color(0xFFF0C8CD),
+                  ),
+                  padding:
+                  const EdgeInsets
+                      .symmetric(
+                    vertical: 13,
+                  ),
+                  shape:
+                  RoundedRectangleBorder(
+                    borderRadius:
+                    BorderRadius.circular(
+                      15,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EditPatientProfileView
+    extends StatefulWidget {
+  const _EditPatientProfileView({
+    required this.user,
+  });
+
+  final AppUser? user;
+
+  @override
+  State<_EditPatientProfileView>
+  createState() =>
+      _EditPatientProfileViewState();
+}
+
+class _EditPatientProfileViewState
+    extends State<_EditPatientProfileView> {
+  late final TextEditingController
+  nameController;
+
+  late final TextEditingController
+  phoneController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    nameController =
+        TextEditingController(
+          text: widget.user?.name ?? '',
+        );
+
+    phoneController =
+        TextEditingController(
+          text: widget.user?.phone ?? '',
+        );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  void _saveProfile() {
+    final name =
+    nameController.text.trim();
+
+    if (name.isEmpty) {
+      Get.snackbar(
+        'Required',
+        'Please enter your name.',
+        snackPosition:
+        SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    Get.back();
+
+    Get.snackbar(
+      'Profile',
+      'Profile information entered successfully.',
+      snackPosition:
+      SnackPosition.BOTTOM,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor:
+      const Color(0xFFF5F8FC),
+
+      appBar: AppBar(
+        backgroundColor:
+        const Color(0xFFF5F8FC),
+        elevation: 0,
+        leading: IconButton(
+          onPressed: () => Get.back(),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 20,
+          ),
+        ),
+        title: const Text(
+          'Edit Profile',
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            color: AppColors.darkText,
+          ),
+        ),
+      ),
+
+      body: ListView(
+        padding:
+        const EdgeInsets.all(20),
+        children: [
+          Center(
+            child: Container(
+              padding:
+              const EdgeInsets.all(3),
+              decoration:
+              BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primary
+                      .withOpacity(.25),
+                  width: 2,
+                ),
+              ),
+              child: UserAvatar(
+                user: widget.user,
+                radius: 48,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          const Center(
+            child: Text(
+              'Update your information',
+              style: TextStyle(
+                color:
+                AppColors.secondaryText,
+                fontSize: 12,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          _EditField(
+            controller:
+            nameController,
+            label: 'Full name',
+            hint:
+            'Enter your full name',
+            icon:
+            Icons.person_outline_rounded,
+          ),
+
+          const SizedBox(height: 16),
+
+          _EditField(
+            controller:
+            phoneController,
+            label: 'Phone number',
+            hint:
+            'Enter your phone number',
+            icon:
+            Icons.phone_outlined,
+            keyboardType:
+            TextInputType.phone,
+          ),
+
+          const SizedBox(height: 16),
+
+          Container(
+            padding:
+            const EdgeInsets.all(15),
+            decoration:
+            BoxDecoration(
+              color: Colors.white,
+              borderRadius:
+              BorderRadius.circular(17),
+              border: Border.all(
+                color: AppColors.border,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration:
+                  BoxDecoration(
+                    color: AppColors.primary
+                        .withOpacity(.08),
+                    borderRadius:
+                    BorderRadius.circular(
+                      12,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.email_outlined,
+                    color:
+                    AppColors.primary,
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment
+                        .start,
+                    children: [
+                      const Text(
+                        'Email',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors
+                              .secondaryText,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        widget.user?.email ??
+                            'Not available',
+                        style:
+                        const TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                          FontWeight.w700,
+                          color: AppColors
+                              .darkText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Icon(
+                  Icons.lock_outline_rounded,
+                  size: 18,
+                  color:
+                  AppColors.secondaryText,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _saveProfile,
+              style:
+              ElevatedButton.styleFrom(
+                backgroundColor:
+                AppColors.primary,
+                foregroundColor:
+                Colors.white,
+                elevation: 0,
+                padding:
+                const EdgeInsets
+                    .symmetric(
+                  vertical: 16,
+                ),
+                shape:
+                RoundedRectangleBorder(
+                  borderRadius:
+                  BorderRadius.circular(
+                    16,
+                  ),
+                ),
+              ),
+              child: const Text(
+                'Save Changes',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight:
+                  FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// EDIT FIELD
+// ============================================================================
+
+class _EditField
+    extends StatelessWidget {
+  const _EditField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.icon,
+    this.keyboardType,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final IconData icon;
+  final TextInputType? keyboardType;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment:
+      CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.darkText,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.darkText,
+          ),
+          decoration:
+          InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(
+              icon,
+              size: 21,
+              color:
+              AppColors.primary,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            border:
+            OutlineInputBorder(
+              borderRadius:
+              BorderRadius.circular(16),
+              borderSide:
+              BorderSide.none,
+            ),
+            enabledBorder:
+            OutlineInputBorder(
+              borderRadius:
+              BorderRadius.circular(16),
+              borderSide:
+              const BorderSide(
+                color: AppColors.border,
+              ),
+            ),
+            focusedBorder:
+            OutlineInputBorder(
+              borderRadius:
+              BorderRadius.circular(16),
+              borderSide:
+              const BorderSide(
+                color:
+                AppColors.primary,
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileInfoRow
+    extends StatelessWidget {
+  const _ProfileInfoRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin:
+      const EdgeInsets.only(
+        bottom: 10,
+      ),
+      padding:
+      const EdgeInsets.all(14),
+      decoration:
+      BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+        BorderRadius.circular(17),
+        border: Border.all(
+          color: AppColors.border,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration:
+            BoxDecoration(
+              color: AppColors.primary
+                  .withOpacity(.08),
+              borderRadius:
+              BorderRadius.circular(
+                12,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color:
+              AppColors.primary,
+              size: 20,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style:
+                  const TextStyle(
+                    color: AppColors
+                        .secondaryText,
+                    fontSize: 10.5,
+                  ),
+                ),
+
+                const SizedBox(height: 3),
+
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow:
+                  TextOverflow.ellipsis,
+                  style:
+                  const TextStyle(
+                    color:
+                    AppColors.darkText,
+                    fontSize: 13,
+                    fontWeight:
+                    FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

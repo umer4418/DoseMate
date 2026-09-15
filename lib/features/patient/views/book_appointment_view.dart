@@ -20,6 +20,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
 
   AppUser? selectedDoctor;
   String? expandedDoctorUid;
+  String? selectedTime;
 
   final notes = TextEditingController();
 
@@ -48,7 +49,6 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
     notes.dispose();
     super.dispose();
   }
-
   Future<void> _selectDoctorDate(AppUser doctor) async {
     if (!doctor.isAvailable) {
       Get.snackbar(
@@ -59,33 +59,65 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       return;
     }
 
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 60)),
-    );
+    final today = DateTime.now();
+    final lastDate = today.add(const Duration(days: 60));
 
-    if (picked == null) return;
+    // Find the first working day to use as the initial calendar date.
+    DateTime initialDate = today;
 
-    if (!controller.isWorkingDay(doctor, picked)) {
+    while (initialDate.isBefore(lastDate) &&
+        !controller.isWorkingDay(doctor, initialDate)) {
+      initialDate = initialDate.add(const Duration(days: 1));
+    }
+
+    // No working day found in the next 60 days.
+    if (!controller.isWorkingDay(doctor, initialDate)) {
       Get.snackbar(
-        'Not a working day',
-        '${doctor.name} is not available on '
-            '${TimeUtils.weekdayName(picked)}.',
+        'No available days',
+        '${doctor.name} has no working days available in the next 60 days.',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: today,
+      lastDate: lastDate,
+
+      // Only doctor's working days can be selected.
+      selectableDayPredicate: (date) {
+        return controller.isWorkingDay(doctor, date);
+      },
+
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: AppColors.darkText,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked == null) return;
+
     setState(() {
       selectedDoctor = doctor;
       expandedDoctorUid = doctor.uid;
+
+      // Reset previous time when a new date is selected.
+      selectedTime = null;
     });
 
     await controller.loadSlots(doctor, picked);
   }
-
   void _openBooking(AppUser doctor) {
     if (!doctor.isAvailable) {
       Get.snackbar(
@@ -100,14 +132,44 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       if (expandedDoctorUid == doctor.uid) {
         expandedDoctorUid = null;
         selectedDoctor = null;
+        selectedTime = null;
       } else {
         expandedDoctorUid = doctor.uid;
         selectedDoctor = doctor;
+        selectedTime = null;
       }
     });
 
     controller.availableSlots.clear();
     controller.selectedDate.value = null;
+  }
+
+  void _confirmAppointment(AppUser doctor) {
+    final date = controller.selectedDate.value;
+
+    if (date == null) {
+      Get.snackbar(
+        'Select a date',
+        'Please select an appointment date first.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    if (selectedTime == null) {
+      Get.snackbar(
+        'Select a time',
+        'Please select an available time slot first.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    controller.book(
+      doctor: doctor,
+      time: selectedTime!,
+      notes: notes.text.trim(),
+    );
   }
 
   void _showDoctorProfile(AppUser doctor) {
@@ -245,7 +307,6 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
 
               const SizedBox(height: 28),
 
-              // Book button
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -291,6 +352,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8FC),
+
       appBar: AppBar(
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -345,6 +407,8 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                     isExpanded: isExpanded,
                     controller: controller,
                     notes: notes,
+                    selectedTime:
+                    isExpanded ? selectedTime : null,
                     onProfile: () {
                       _showDoctorProfile(doctor);
                     },
@@ -353,6 +417,14 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                     },
                     onChooseDate: () {
                       _selectDoctorDate(doctor);
+                    },
+                    onSelectTime: (time) {
+                      setState(() {
+                        selectedTime = time;
+                      });
+                    },
+                    onConfirm: () {
+                      _confirmAppointment(doctor);
                     },
                   ),
                 );
@@ -393,7 +465,6 @@ class _AppointmentBanner extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Decorative circle
           Positioned(
             right: -50,
             top: -50,
@@ -445,9 +516,7 @@ class _AppointmentBanner extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-
                       SizedBox(height: 10),
-
                       Text(
                         'Book an appointment with a trusted healthcare professional.',
                         style: TextStyle(
@@ -479,16 +548,18 @@ class _AppointmentBanner extends StatelessWidget {
     );
   }
 }
-
 class _ProfessionalDoctorCard extends StatelessWidget {
   const _ProfessionalDoctorCard({
     required this.doctor,
     required this.isExpanded,
     required this.controller,
     required this.notes,
+    required this.selectedTime,
     required this.onProfile,
     required this.onBook,
     required this.onChooseDate,
+    required this.onSelectTime,
+    required this.onConfirm,
   });
 
   final AppUser doctor;
@@ -496,9 +567,13 @@ class _ProfessionalDoctorCard extends StatelessWidget {
   final AppointmentController controller;
   final TextEditingController notes;
 
+  final String? selectedTime;
+
   final VoidCallback onProfile;
   final VoidCallback onBook;
   final VoidCallback onChooseDate;
+  final ValueChanged<String> onSelectTime;
+  final VoidCallback onConfirm;
 
   @override
   Widget build(BuildContext context) {
@@ -531,15 +606,17 @@ class _ProfessionalDoctorCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(17),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
-                // Avatar
                 Container(
                   width: 62,
                   height: 62,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(.10),
-                    borderRadius: BorderRadius.circular(18),
+                    color:
+                    AppColors.primary.withOpacity(.10),
+                    borderRadius:
+                    BorderRadius.circular(18),
                   ),
                   child: const Icon(
                     Icons.person_rounded,
@@ -550,7 +627,6 @@ class _ProfessionalDoctorCard extends StatelessWidget {
 
                 const SizedBox(width: 13),
 
-                // Doctor information
                 Expanded(
                   child: Column(
                     crossAxisAlignment:
@@ -559,11 +635,14 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                       Text(
                         doctor.name,
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                        TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.darkText,
+                          fontWeight:
+                          FontWeight.w800,
+                          color:
+                          AppColors.darkText,
                         ),
                       ),
 
@@ -572,27 +651,34 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                       Text(
                         specialization,
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow:
+                        TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 12,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
+                          color:
+                          AppColors.primary,
+                          fontWeight:
+                          FontWeight.w600,
                         ),
                       ),
 
                       const SizedBox(height: 8),
 
-                      // Availability
                       Row(
                         children: [
                           Container(
                             width: 8,
                             height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: doctor.isAvailable
-                                  ? AppColors.success
-                                  : AppColors.danger,
+                            decoration:
+                            BoxDecoration(
+                              shape:
+                              BoxShape.circle,
+                              color: doctor
+                                  .isAvailable
+                                  ? AppColors
+                                  .success
+                                  : AppColors
+                                  .danger,
                             ),
                           ),
 
@@ -604,10 +690,14 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                                 : 'Unavailable',
                             style: TextStyle(
                               fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: doctor.isAvailable
-                                  ? AppColors.success
-                                  : AppColors.danger,
+                              fontWeight:
+                              FontWeight.w700,
+                              color: doctor
+                                  .isAvailable
+                                  ? AppColors
+                                  .success
+                                  : AppColors
+                                  .danger,
                             ),
                           ),
                         ],
@@ -618,13 +708,13 @@ class _ProfessionalDoctorCard extends StatelessWidget {
 
                 const SizedBox(width: 8),
 
-                // Profile button
                 IconButton(
                   onPressed: onProfile,
                   tooltip: 'View profile',
                   style: IconButton.styleFrom(
                     backgroundColor:
-                    AppColors.primary.withOpacity(.08),
+                    AppColors.primary
+                        .withOpacity(.08),
                   ),
                   icon: const Icon(
                     Icons.visibility_outlined,
@@ -637,12 +727,16 @@ class _ProfessionalDoctorCard extends StatelessWidget {
           ),
 
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 17),
+            padding:
+            const EdgeInsets.symmetric(
+              horizontal: 17,
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: _MiniDoctorInfo(
-                    icon: Icons.calendar_month_outlined,
+                    icon:
+                    Icons.calendar_month_outlined,
                     text: doctor.workingDays.isEmpty
                         ? 'Days not set'
                         : doctor.workingDays.join(', '),
@@ -663,7 +757,6 @@ class _ProfessionalDoctorCard extends StatelessWidget {
           ),
 
           const SizedBox(height: 17),
-
           Padding(
             padding: const EdgeInsets.fromLTRB(
               17,
@@ -677,22 +770,30 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: onProfile,
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primary,
+                      foregroundColor:
+                      AppColors.primary,
                       side: BorderSide(
-                        color:
-                        AppColors.primary.withOpacity(.25),
+                        color: AppColors.primary
+                            .withOpacity(.25),
                       ),
                       minimumSize:
-                      const Size(double.infinity, 46),
-                      shape: RoundedRectangleBorder(
+                      const Size(
+                        double.infinity,
+                        46,
+                      ),
+                      shape:
+                      RoundedRectangleBorder(
                         borderRadius:
-                        BorderRadius.circular(13),
+                        BorderRadius.circular(
+                          13,
+                        ),
                       ),
                     ),
                     child: const Text(
                       'View Profile',
                       style: TextStyle(
-                        fontWeight: FontWeight.w700,
+                        fontWeight:
+                        FontWeight.w700,
                         fontSize: 12,
                       ),
                     ),
@@ -706,19 +807,28 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                     onPressed: doctor.isAvailable
                         ? onBook
                         : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                    style:
+                    ElevatedButton.styleFrom(
+                      backgroundColor:
+                      AppColors.primary,
+                      foregroundColor:
+                      Colors.white,
                       disabledBackgroundColor:
                       Colors.grey.shade200,
                       disabledForegroundColor:
                       Colors.grey.shade500,
                       elevation: 0,
                       minimumSize:
-                      const Size(double.infinity, 46),
-                      shape: RoundedRectangleBorder(
+                      const Size(
+                        double.infinity,
+                        46,
+                      ),
+                      shape:
+                      RoundedRectangleBorder(
                         borderRadius:
-                        BorderRadius.circular(13),
+                        BorderRadius.circular(
+                          13,
+                        ),
                       ),
                     ),
                     child: Text(
@@ -726,7 +836,8 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                           ? 'Close Booking'
                           : 'Book Now',
                       style: const TextStyle(
-                        fontWeight: FontWeight.w700,
+                        fontWeight:
+                        FontWeight.w700,
                         fontSize: 12,
                       ),
                     ),
@@ -739,7 +850,8 @@ class _ProfessionalDoctorCard extends StatelessWidget {
           if (isExpanded)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(
+              padding:
+              const EdgeInsets.fromLTRB(
                 17,
                 18,
                 17,
@@ -747,7 +859,8 @@ class _ProfessionalDoctorCard extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFD),
-                borderRadius: const BorderRadius.vertical(
+                borderRadius:
+                const BorderRadius.vertical(
                   bottom: Radius.circular(22),
                 ),
                 border: Border(
@@ -764,27 +877,29 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                     'Select appointment date',
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.darkText,
+                      fontWeight:
+                      FontWeight.w800,
+                      color:
+                      AppColors.darkText,
                     ),
                   ),
 
                   const SizedBox(height: 5),
 
                   const Text(
-                    'Choose a working day to see available time slots.',
+                    'Choose one of the doctor\'s working days to see available time slots.',
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: AppColors.secondaryText,
+                      color:
+                      AppColors.secondaryText,
                     ),
                   ),
 
                   const SizedBox(height: 13),
-
-                  // DATE BUTTON
                   Obx(() {
                     final selectedDate =
-                        controller.selectedDate.value;
+                        controller
+                            .selectedDate.value;
 
                     return Material(
                       color: Colors.white,
@@ -797,14 +912,24 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                         child: Container(
                           width: double.infinity,
                           padding:
-                          const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
+                          const EdgeInsets.all(
+                            14,
+                          ),
+                          decoration:
+                          BoxDecoration(
                             borderRadius:
-                            BorderRadius.circular(15),
+                            BorderRadius.circular(
+                              15,
+                            ),
                             border: Border.all(
-                              color: selectedDate == null
+                              color: selectedDate ==
+                                  null
                                   ? AppColors.border
                                   : AppColors.primary,
+                              width: selectedDate ==
+                                  null
+                                  ? 1
+                                  : 1.5,
                             ),
                           ),
                           child: Row(
@@ -812,17 +937,22 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                               Container(
                                 width: 44,
                                 height: 44,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary
+                                decoration:
+                                BoxDecoration(
+                                  color: AppColors
+                                      .primary
                                       .withOpacity(.09),
                                   borderRadius:
-                                  BorderRadius.circular(
+                                  BorderRadius
+                                      .circular(
                                     12,
                                   ),
                                 ),
                                 child: const Icon(
-                                  Icons.calendar_month_rounded,
-                                  color: AppColors.primary,
+                                  Icons
+                                      .calendar_month_rounded,
+                                  color:
+                                  AppColors.primary,
                                   size: 23,
                                 ),
                               ),
@@ -832,28 +962,35 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                                  CrossAxisAlignment
+                                      .start,
                                   children: [
                                     Text(
-                                      selectedDate == null
+                                      selectedDate ==
+                                          null
                                           ? 'Choose a date'
-                                          : TimeUtils.prettyDate(
+                                          : TimeUtils
+                                          .prettyDate(
                                         selectedDate,
                                       ),
                                       style:
                                       const TextStyle(
                                         fontSize: 13,
                                         fontWeight:
-                                        FontWeight.w800,
-                                        color:
-                                        AppColors.darkText,
+                                        FontWeight
+                                            .w800,
+                                        color: AppColors
+                                            .darkText,
                                       ),
                                     ),
 
-                                    const SizedBox(height: 3),
+                                    const SizedBox(
+                                      height: 3,
+                                    ),
 
                                     Text(
-                                      selectedDate == null
+                                      selectedDate ==
+                                          null
                                           ? 'Tap to open calendar'
                                           : 'Date selected',
                                       style:
@@ -871,8 +1008,8 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                                 Icons
                                     .arrow_forward_ios_rounded,
                                 size: 15,
-                                color:
-                                AppColors.secondaryText,
+                                color: AppColors
+                                    .secondaryText,
                               ),
                             ],
                           ),
@@ -881,57 +1018,103 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                     );
                   }),
 
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Available time slots',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight:
+                            FontWeight.w800,
+                            color:
+                            AppColors.darkText,
+                          ),
+                        ),
+                      ),
 
-                  const Text(
-                    'Available time slots',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.darkText,
-                    ),
+                      if (selectedTime != null)
+                        Container(
+                          padding:
+                          const EdgeInsets
+                              .symmetric(
+                            horizontal: 9,
+                            vertical: 5,
+                          ),
+                          decoration:
+                          BoxDecoration(
+                            color: AppColors.primary
+                                .withOpacity(.09),
+                            borderRadius:
+                            BorderRadius.circular(
+                              20,
+                            ),
+                          ),
+                          child: Text(
+                            'Selected',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight:
+                              FontWeight.w700,
+                              color:
+                              AppColors.primary,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
 
                   const SizedBox(height: 10),
-
                   Obx(() {
-                    if (controller.loadingSlots.value) {
+                    if (controller
+                        .loadingSlots.value) {
                       return Container(
                         width: double.infinity,
                         padding:
                         const EdgeInsets.all(25),
-                        decoration: BoxDecoration(
+                        decoration:
+                        BoxDecoration(
                           color: Colors.white,
                           borderRadius:
-                          BorderRadius.circular(16),
+                          BorderRadius.circular(
+                            16,
+                          ),
                           border: Border.all(
-                            color: AppColors.border,
+                            color:
+                            AppColors.border,
                           ),
                         ),
                         child: const Center(
                           child:
                           CircularProgressIndicator(
-                            color: AppColors.primary,
+                            color:
+                            AppColors.primary,
                           ),
                         ),
                       );
                     }
 
-                    if (controller.selectedDate.value ==
+                    if (controller
+                        .selectedDate.value ==
                         null) {
                       return const _InfoBox(
                         icon: Icons
                             .calendar_today_outlined,
-                        title: 'No date selected',
+                        title:
+                        'No date selected',
                         subtitle:
                         'Choose a working day to see available appointment times.',
                       );
                     }
 
-                    if (controller.availableSlots.isEmpty) {
+                    if (controller
+                        .availableSlots.isEmpty) {
                       return const _InfoBox(
-                        icon: Icons.event_busy_outlined,
-                        title: 'No slots available',
+                        icon:
+                        Icons.event_busy_outlined,
+                        title:
+                        'No slots available',
                         subtitle:
                         'There are no open appointment times on this date.',
                       );
@@ -940,83 +1123,108 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                     return Wrap(
                       spacing: 9,
                       runSpacing: 9,
-                      children: controller.availableSlots
-                          .map(
-                            (slot) {
-                          return Material(
-                            color: Colors.white,
+                      children: controller
+                          .availableSlots
+                          .map((slot) {
+                        final isSelected =
+                            selectedTime == slot;
+
+                        return Material(
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.white,
+                          borderRadius:
+                          BorderRadius.circular(
+                            13,
+                          ),
+                          child: InkWell(
+                            onTap: () {
+                              onSelectTime(slot);
+                            },
                             borderRadius:
-                            BorderRadius.circular(13),
-                            child: InkWell(
-                              onTap: () {
-                                controller.book(
-                                  doctor: doctor,
-                                  time: slot,
-                                  notes: notes.text,
-                                );
-                              },
-                              borderRadius:
-                              BorderRadius.circular(13),
-                              child: Container(
-                                padding:
-                                const EdgeInsets
-                                    .symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
+                            BorderRadius.circular(
+                              13,
+                            ),
+                            child: Container(
+                              padding:
+                              const EdgeInsets
+                                  .symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              decoration:
+                              BoxDecoration(
+                                borderRadius:
+                                BorderRadius
+                                    .circular(
+                                  13,
                                 ),
-                                decoration: BoxDecoration(
-                                  borderRadius:
-                                  BorderRadius.circular(
-                                    13,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors
+                                      .primary
+                                      : AppColors
+                                      .primary
+                                      .withOpacity(
+                                    .25,
                                   ),
-                                  border: Border.all(
-                                    color: AppColors.primary
-                                        .withOpacity(.25),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize:
-                                  MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons
-                                          .access_time_rounded,
-                                      size: 16,
-                                      color:
-                                      AppColors.primary,
-                                    ),
-
-                                    const SizedBox(width: 6),
-
-                                    Text(
-                                      slot,
-                                      style:
-                                      const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight:
-                                        FontWeight.w700,
-                                        color:
-                                        AppColors.primary,
-                                      ),
-                                    ),
-                                  ],
+                                  width: isSelected
+                                      ? 1.5
+                                      : 1,
                                 ),
                               ),
+                              child: Row(
+                                mainAxisSize:
+                                MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isSelected
+                                        ? Icons
+                                        .check_circle_rounded
+                                        : Icons
+                                        .access_time_rounded,
+                                    size: 16,
+                                    color: isSelected
+                                        ? Colors.white
+                                        : AppColors
+                                        .primary,
+                                  ),
+
+                                  const SizedBox(
+                                    width: 6,
+                                  ),
+
+                                  Text(
+                                    slot,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight:
+                                      FontWeight
+                                          .w700,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : AppColors
+                                          .primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        },
-                      ).toList(),
+                          ),
+                        );
+                      }).toList(),
                     );
                   }),
 
                   const SizedBox(height: 20),
-
                   const Text(
                     'Appointment notes',
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.darkText,
+                      fontWeight:
+                      FontWeight.w800,
+                      color:
+                      AppColors.darkText,
                     ),
                   ),
 
@@ -1026,7 +1234,8 @@ class _ProfessionalDoctorCard extends StatelessWidget {
                     'Optional information for your doctor.',
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: AppColors.secondaryText,
+                      color:
+                      AppColors.secondaryText,
                     ),
                   ),
 
@@ -1034,9 +1243,113 @@ class _ProfessionalDoctorCard extends StatelessWidget {
 
                   AppTextField(
                     controller: notes,
-                    hint: 'Reason / notes (optional)',
+                    hint:
+                    'Reason / notes (optional)',
                     icon: Icons.notes_outlined,
                   ),
+
+                  const SizedBox(height: 20),
+                  Obx(() {
+                    final hasDate =
+                        controller
+                            .selectedDate.value !=
+                            null;
+
+                    final hasTime =
+                        selectedTime != null;
+
+                    final canConfirm =
+                        hasDate && hasTime;
+
+                    return Column(
+                      crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                      children: [
+                        if (!canConfirm)
+                          Padding(
+                            padding:
+                            const EdgeInsets.only(
+                              bottom: 9,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons
+                                      .info_outline_rounded,
+                                  size: 15,
+                                  color: AppColors
+                                      .secondaryText,
+                                ),
+                                const SizedBox(
+                                  width: 6,
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    !hasDate
+                                        ? 'Select a date to continue.'
+                                        : 'Select a time slot to continue.',
+                                    style:
+                                    const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors
+                                          .secondaryText,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child:
+                          ElevatedButton.icon(
+                            onPressed: canConfirm
+                                ? onConfirm
+                                : null,
+                            icon: const Icon(
+                              Icons
+                                  .check_circle_outline_rounded,
+                            ),
+                            label: Text(
+                              canConfirm
+                                  ? 'Confirm Appointment'
+                                  : 'Select Date & Time',
+                              style:
+                              const TextStyle(
+                                fontWeight:
+                                FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                            style: ElevatedButton
+                                .styleFrom(
+                              backgroundColor:
+                              AppColors.primary,
+                              foregroundColor:
+                              Colors.white,
+                              disabledBackgroundColor:
+                              Colors.grey
+                                  .shade200,
+                              disabledForegroundColor:
+                              Colors.grey
+                                  .shade500,
+                              elevation: 0,
+                              shape:
+                              RoundedRectangleBorder(
+                                borderRadius:
+                                BorderRadius
+                                    .circular(
+                                  15,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
                 ],
               ),
             ),
@@ -1123,8 +1436,10 @@ class _ProfileInformationTile extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(.09),
-              borderRadius: BorderRadius.circular(12),
+              color:
+              AppColors.primary.withOpacity(.09),
+              borderRadius:
+              BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
@@ -1144,8 +1459,10 @@ class _ProfileInformationTile extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     fontSize: 11,
-                    color: AppColors.secondaryText,
-                    fontWeight: FontWeight.w600,
+                    color:
+                    AppColors.secondaryText,
+                    fontWeight:
+                    FontWeight.w600,
                   ),
                 ),
 
@@ -1155,8 +1472,10 @@ class _ProfileInformationTile extends StatelessWidget {
                   value,
                   style: const TextStyle(
                     fontSize: 13,
-                    color: AppColors.darkText,
-                    fontWeight: FontWeight.w700,
+                    color:
+                    AppColors.darkText,
+                    fontWeight:
+                    FontWeight.w700,
                   ),
                 ),
               ],
@@ -1199,8 +1518,10 @@ class _InfoBox extends StatelessWidget {
             width: 45,
             height: 45,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(.08),
-              borderRadius: BorderRadius.circular(13),
+              color:
+              AppColors.primary.withOpacity(.08),
+              borderRadius:
+              BorderRadius.circular(13),
             ),
             child: Icon(
               icon,
@@ -1218,8 +1539,10 @@ class _InfoBox extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.darkText,
+                    fontWeight:
+                    FontWeight.w800,
+                    color:
+                    AppColors.darkText,
                   ),
                 ),
 
@@ -1230,7 +1553,8 @@ class _InfoBox extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     height: 1.4,
-                    color: AppColors.secondaryText,
+                    color:
+                    AppColors.secondaryText,
                   ),
                 ),
               ],
@@ -1241,6 +1565,10 @@ class _InfoBox extends StatelessWidget {
     );
   }
 }
+
+// ============================================================================
+// SECTION TITLE
+// ============================================================================
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({
@@ -1272,7 +1600,8 @@ class _SectionTitle extends StatelessWidget {
           subtitle,
           style: const TextStyle(
             fontSize: 12,
-            color: AppColors.secondaryText,
+            color:
+            AppColors.secondaryText,
           ),
         ),
       ],
